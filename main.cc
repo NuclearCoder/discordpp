@@ -77,7 +77,9 @@ int main() {
         resource::discord::sessionID() = jmessage["d"]["session_id"];
     };
     eventResponses["MESSAGE_CREATE"] = [soft_commands](json jmessage){
+        //std::cout << jmessage.dump(4) << "\n";
         for(auto& val : jmessage["d"]["mentions"]){
+            //std::cout << ((val["id"] == resource::discord::me()["id"]) ? "true" : "false") << ((jmessage["d"]["content"].get<std::string>().length() > 23) ? "true" : "false") << "\n";
             if(val["id"] == resource::discord::me()["id"] && jmessage["d"]["content"].get<std::string>().length() > 23){
                 std::string message = jmessage["d"]["content"].get<std::string>();
                 message = message.substr(resource::discord::me()["id"].get<std::string>().length() + 4, message.length());
