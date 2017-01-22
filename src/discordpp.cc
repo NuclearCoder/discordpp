@@ -3,9 +3,9 @@
 //
 #include "discordpp/discordpp.hh"
 
-#include <vector>
-#include <string>
-#include <cstdlib>
+//#include <vector>
+//#include <string>
+//#include <cstdlib>
 #include <chrono>
 #include <thread>
 
@@ -15,13 +15,13 @@
 #include <curlpp/Exception.hpp>
 #define STDC_HEADERS 1
 
-#include "lib/nlohmannjson/src/json.hpp"
+//#include "lib/nlohmannjson/src/json.hpp"
 
 using namespace discordpp;
 
 using json = nlohmann::json;
-namespace asio = boost::asio;
-using boost::system::error_code;
+//namespace asio = boost::asio;
+//using boost::system::error_code;
 using snowflake = uint64_t;
 
 
@@ -397,103 +397,4 @@ json DiscordAPI::invites::accept(snowflake inviteID, std::string token){
 
 json DiscordAPI::voice::listVoiceRegions(std::string token) {
     return DiscordAPI::call("/voice/regions", token, "GET");
-}
-
-using client = websocketpp::client<websocketpp::config::asio_tls_client>;
-using message_ptr = websocketpp::config::asio_client::message_type::ptr;
-Client::Client(asio::io_service& asio_ios, const std::string& token, std::map<std::string, std::function<void(json)>> eventResponses)//std::map <std::string, std::string> soft_responses = {})
-: asio_ios_(asio_ios)
-, token_(token)
-, keepalive_timer_(asio_ios)
-, eventResponses_(eventResponses)
-{
-    client_.set_access_channels(websocketpp::log::alevel::all);
-    client_.clear_access_channels(websocketpp::log::alevel::frame_payload);
-
-    client_.set_tls_init_handler([this](websocketpp::connection_hdl){
-        return websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv1);
-    });
-
-    client_.init_asio(&asio_ios);
-
-    client_.set_message_handler(std::bind(&Client::on_message, this,
-                                          std::placeholders::_1, std::placeholders::_2));
-    client_.set_open_handler(std::bind(&Client::on_open, this,
-                                       std::placeholders::_1));
-
-    websocketpp::lib::error_code ec;
-    std::string uri = fetchGateway(token);
-    std::cout << "Connecting to gateway at " << uri << "\n";
-    connection_ = client_.get_connection(uri, ec);
-    if (ec) {
-        std::cout << "could not create connection because: " << ec.message() << std::endl;
-        //TODO TBD: throw something
-    } else {
-        // Note that connect here only requests a connection. No network messages are
-        // exchanged until the event loop starts running in the next line.
-        client_.connect(connection_);
-    }
-}
-
-void Client::on_message(websocketpp::connection_hdl hdl, message_ptr msg) {
-    json jmessage = json::parse(msg->get_payload());
-    if(jmessage["op"].get<int>() == 0){ //Dispatch
-        std::map<std::string, std::function<void(json)>>::iterator it = eventResponses_.find(jmessage["t"]);
-        if(it != eventResponses_.end()){
-            asio_ios_.post(std::bind(it->second, jmessage));
-        } else {
-            std::cout << "There is no function for the event " << jmessage["t"] << ".\n";
-        }
-        if(jmessage["t"] == "READY") {
-            uint32_t ms = jmessage["d"]["heartbeat_interval"];
-            ms *= .9;
-            keepalive(ms);
-        }
-    } else if(jmessage["op"].get<int>() == 1){ //Heartbeat (This isn't implemented yet, still using periodic heartbeats for now.)
-        //client_.send(hdl, jmessage.dump(), websocketpp::frame::opcode::text);
-    } else { //Wat
-        std::cout << "Unexpected opcode received:\n\n" << jmessage.dump(4) << "\n\n\n";
-    }
-}
-
-void Client::keepalive(uint32_t ms){
-    auto now = std::chrono::system_clock::now();
-    auto duration = now.time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    json message = {
-            {"op", 1},
-            {"d", millis}
-    };
-    std::cout << "Sending Heartbeat:\n";
-    client_.send(connection_, message.dump(), websocketpp::frame::opcode::text);
-    //reset timer
-    keepalive_timer_.expires_from_now(std::chrono::milliseconds(ms));
-    keepalive_timer_.async_wait(std::bind(&Client::keepalive, this, ms));
-}
-
-void Client::on_open(websocketpp::connection_hdl hdl){
-    std::cout << "Connection established.\n";
-
-    json connect = {
-            {"op", 2},
-            {"d", {
-                           {"token", token_},
-                           {"v", 4},
-                           {"properties", {
-                                                  {"$os", "linux"},
-                                                  {"$browser", "discordpp"},
-                                                  {"$device", "discordpp"},
-                                                  {"$referrer",""}, {"$referring_domain",""}
-                                          }
-                           },
-                           {"compress", false},
-                           {"large_threshold", 250}
-                   }
-            }
-    };
-    std::cout << "Client Handshake:\n" << connect.dump(1) << "\n";
-    client_.send(hdl, connect.dump(), websocketpp::frame::opcode::text);
-}
-std::string Client::fetchGateway(std::string token){
-    return DiscordAPI::call("/gateway", token).at("url");
 }

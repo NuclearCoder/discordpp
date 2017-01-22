@@ -12,10 +12,11 @@
 
 #include "discordpp.hh"
 
-namespace asio = boost::asio;
 
 namespace discordpp {
     using json = nlohmann::json;
+    namespace asio = boost::asio;
+    using boost::system::error_code;
 
     class Bot {
     public:

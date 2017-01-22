@@ -3,8 +3,9 @@
 //
 
 #include "discordpp/bot.hh"
+#include "discordpp/client.hh"
 
-#include <functional>
+//#include <functional>
 
 using namespace discordpp;
 
