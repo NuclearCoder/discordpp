@@ -50,12 +50,16 @@ Client::Client(asio::io_service& asio_ios, const std::string& token, std::map<st
     //boost::asio::ssl::context ctx{boost::asio::ssl::context::sslv23};
     //beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> ws{asio_ios_, ctx};
 
-    /*// Normal boost::asio setup
+    // Normal boost::asio setup
     std::string host = fetchGateway(token);
+    std::string::size_type protocolPos = host.find("wss://");
+    if (protocolPos != std::string::npos) {
+        host.erase(protocolPos, 6);
+    }
     std::cout << "Connecting to gateway at " << host << "\n";
     boost::asio::ip::tcp::resolver r{asio_ios_};
     boost::asio::ip::tcp::socket sock{asio_ios_};
-    boost::asio::connect(sock, r.resolve(boost::asio::ip::tcp::resolver::query{host, "http"}));
+    boost::asio::connect(sock, r.resolve(boost::asio::ip::tcp::resolver::query{host, "https"}));
 
     // Perform SSL handshaking
     asio::ssl::context ctx{asio::ssl::context::sslv23};
@@ -68,9 +72,9 @@ Client::Client(asio::io_service& asio_ios, const std::string& token, std::map<st
     //ws_ = &ws;
     std::cout << "handshaking at " << host << "\n";
     ws_->handshake(host, "/");
-    //ws.write(asio::buffer("Hello, world!"));*/
+    //ws.write(asio::buffer("Hello, world!"));
 
-    // Normal boost::asio setup
+    /* // Normal boost::asio setup
     std::string host = fetchGateway(token);
     std::string::size_type protocolPos = host.find("wss://");
     if (protocolPos != std::string::npos) {
@@ -79,13 +83,13 @@ Client::Client(asio::io_service& asio_ios, const std::string& token, std::map<st
     boost::asio::ip::tcp::resolver r{asio_ios_};
     boost::asio::ip::tcp::socket sock{asio_ios_};
     boost::asio::connect(sock,
-                         r.resolve(boost::asio::ip::tcp::resolver::query{host, "http"}));
+                         r.resolve(boost::asio::ip::tcp::resolver::query{host, "443"}));
 
     // WebSocket connect and send message using beast
     std::cout << "here" << std::endl;
     beast::websocket::stream<boost::asio::ip::tcp::socket&> ws{sock};
     std::cout << "here" << std::endl;
-    ws.handshake(host, "/");
+    ws.handshake(host, "/");*/
 
     std::cout << "Connection established.\n";
 
